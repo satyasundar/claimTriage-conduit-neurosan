@@ -1,0 +1,84 @@
+{
+  "policy_id": "HO-STD-2025",
+  "product": "Homeowners Standard",
+  "note": "Fully synthetic. No real policy, policyholder, or insurer. Used to demonstrate policy-grounded claims adjudication.",
+  "currency": "USD",
+  "policyholder_in_force": {"start": "2025-09-01", "end": "2026-08-31"},
+  "standard_deductible": 1000,
+  "coverages": [
+    {
+      "code": "DWELL",
+      "name": "Dwelling",
+      "perils": ["fire", "windstorm", "hail", "lightning", "theft", "vandalism", "explosion", "water damage"],
+      "limit": 350000,
+      "deductible": 1000
+    },
+    {
+      "code": "WATER",
+      "name": "Water damage (sudden and accidental)",
+      "perils": ["water damage", "burst pipe", "sudden water discharge", "escape of water"],
+      "limit": 40000,
+      "deductible": 1000
+    },
+    {
+      "code": "PERSONAL",
+      "name": "Personal property",
+      "perils": ["theft", "fire", "water damage", "vandalism"],
+      "limit": 100000,
+      "deductible": 500
+    },
+    {
+      "code": "LIABILITY",
+      "name": "Personal liability",
+      "perils": ["bodily injury", "property damage to others"],
+      "limit": 300000,
+      "deductible": 0
+    }
+  ],
+  "exclusions": [
+    {
+      "code": "EXCL-FLOOD",
+      "description": "Flood, surface water, storm surge, and rising water are excluded.",
+      "checks": [
+        {"kind": "peril_in", "perils": ["flood", "surface water", "storm surge", "rising water"]},
+        {"kind": "text_contains", "terms": ["flood", "storm surge", "rising water", "river overflow", "surface water"]}
+      ]
+    },
+    {
+      "code": "EXCL-SEEPAGE",
+      "description": "Gradual or repeated seepage or leakage occurring over a period of time is excluded.",
+      "checks": [
+        {"kind": "text_contains", "terms": ["gradual", "seepage", "over several months", "over time", "long-standing", "continuous leak", "repeated leakage", "ongoing leak"]}
+      ]
+    },
+    {
+      "code": "EXCL-WEAR",
+      "description": "Wear and tear, deterioration, and lack of maintenance are excluded.",
+      "checks": [
+        {"kind": "text_contains", "terms": ["wear and tear", "deterioration", "lack of maintenance", "poorly maintained", "neglect"]}
+      ]
+    },
+    {
+      "code": "EXCL-EARTH",
+      "description": "Earth movement, earthquake, and landslide are excluded.",
+      "checks": [
+        {"kind": "peril_in", "perils": ["earthquake", "earth movement", "landslide", "subsidence"]},
+        {"kind": "text_contains", "terms": ["earthquake", "landslide", "earth movement", "subsidence"]}
+      ]
+    },
+    {
+      "code": "EXCL-INTENT",
+      "description": "Intentional or fraudulent acts committed by the insured are excluded.",
+      "checks": [
+        {"kind": "text_contains", "terms": ["intentional", "deliberately set", "arson by insured", "staged"]}
+      ]
+    }
+  ],
+  "conditions": [
+    {
+      "code": "COND-NOTICE",
+      "description": "The insured must report a loss promptly, and in any event within 30 days of the date of loss.",
+      "max_report_days": 30
+    }
+  ]
+}

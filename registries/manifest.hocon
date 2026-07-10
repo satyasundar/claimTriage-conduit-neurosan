@@ -23,6 +23,9 @@
     # Basic examples
     include "registries/basic/manifest.hocon",
 
+    # Hackathon Agent
+    include "registries/hackathon/manifest.hocon",
+
     # Tool integration examples
     include "registries/tools/manifest.hocon",
     

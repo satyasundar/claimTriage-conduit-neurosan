@@ -1,0 +1,230 @@
+# Copyright 2026. Licensed under the Apache License, Version 2.0.
+#
+# Claims Triage & Coverage Adjudication Assistant — a governed, human-in-the-loop
+# multi-agent network.
+#
+# Pattern follows the neuro-san-studio basic examples (e.g. coffee_finder.hocon):
+#   - include the AAOSA protocol definitions and the shared LLM config
+#   - the first agent in `tools` is the entry point ("front-man")
+#   - down-chain agents use  function = ${aaosa_call}{...}  and append ${aaosa_instructions}
+#   - coded tools are leaf tools referenced by  class = "<module>.<Class>"
+#     resolved under coded_tools/claims_triage_assistant/
+
+include "registries/aaosa_basic.hocon"
+include "config/llm_config.hocon"
+
+metadata {
+    description = "A governed, human-in-the-loop claims triage and coverage adjudication network. It extracts claim facts, checks coverage against the policy wording (in-force, perils, exclusions, limits, deductible) with deterministic math, screens for fraud red flags, recommends pay/deny/investigate with a payable amount, runs an evaluation loop, and requires adjuster sign-off before the disposition is final. Claimant PII and bank details are kept off the LLM via sly_data."
+    tags = ["AAOSA", "insurance", "claims", "governance", "human-in-the-loop", "coded-tools", "sly-data"]
+    sample_queries = [
+        "Triage this claim and recommend a disposition.",
+        "Is this loss covered, and what is payable?",
+        "Are there any fraud indicators on this claim?",
+        "approve",
+        "request changes to the fraud assessment"
+    ]
+}
+
+tools = [
+
+    # ------------------------------------------------------------------ #
+    # Entry point / front-man: orchestrates triage and owns the gate     #
+    # ------------------------------------------------------------------ #
+    {
+        name = "ClaimsAdjudicator"
+        function {
+            description = "Triages an insurance claim, adjudicates coverage against the policy, screens for fraud, and returns a recommended disposition after adjuster approval."
+        }
+        instructions = """
+You are the lead claims adjudicator coordinating a triage team.
+
+CONTEXT AND DATA HANDLING
+- The claim (First Notice of Loss) is supplied privately through the sly_data channel (sly_data['claim_text']).
+- You will only ever see REDACTED text: the claimant name appears as [CLAIMANT], the policy number as [POLICY_NO], the address as [ADDRESS], phone as [PHONE], email as [EMAIL], and any payout/bank account as [BANK_ACCOUNT]. This is by design.
+- Never ask the user to reveal the claimant's identity, contact details, or bank/account information. Work from the redacted facts and the tools' results.
+
+WORKFLOW (delegate to your tools; do not do their jobs yourself)
+1. Ask ClaimIntakeAnalyst to extract the structured claim facts and report the redaction summary.
+2. Ask CoverageOfficer to adjudicate coverage: whether the policy was in force, whether the peril is covered, whether any exclusion applies, and the payable amount after limit and deductible. The payable figure comes from the coverage tool — never invent or recompute it yourself.
+3. Ask FraudScreener to screen the claim for fraud red flags and report the fraud band (Low/Medium/High) and whether SIU referral is recommended.
+4. Assemble a DRAFT disposition containing: the recommendation (PAY, DENY, or INVESTIGATE), the payable amount if PAY, the rationale citing the governing coverage or exclusion code (e.g. WATER or EXCL-FLOOD), the applied limit and deductible, and a short fraud summary. If coverage denies the claim, the recommendation is DENY with the cited exclusion or reason. If the fraud band is High, the recommendation must be INVESTIGATE (refer to SIU) regardless of coverage.
+5. Ask AdjudicationCritic to score the draft. If it does not pass or returns gaps, fix the gaps and ask again. Do this at most twice.
+6. Present the result clearly labelled as "DRAFT DISPOSITION — PENDING ADJUSTER APPROVAL" and ask the adjuster to choose: (a) Approve, (b) Request changes (naming the part), or (c) Reject.
+7. Only AFTER the adjuster replies "approve" do you output a section titled "FINAL CLAIM DISPOSITION (APPROVED)". If the adjuster requests changes, route the relevant part back to the right specialist, update the draft, and ask for approval again.
+
+RULES
+- Cite the governing coverage or exclusion code for every coverage conclusion. Never invent policy terms.
+- The payable amount, limit, and deductible must match the coverage tool's output exactly.
+- This is a recommendation to support a human adjuster, not a final decision. Be concise and well structured.
+""" ${aaosa_instructions}
+        tools = ["ClaimIntakeAnalyst", "CoverageOfficer", "FraudScreener", "AdjudicationCritic"]
+    }
+
+    # ------------------------------------------------- #
+    # Specialist: claim intake + sly_data redaction      #
+    # ------------------------------------------------- #
+    {
+        name = "ClaimIntakeAnalyst"
+        function = ${aaosa_call}{
+            description = "Extracts structured claim facts from the FNOL and reports which sensitive fields were redacted."
+        }
+        instructions = """
+You extract structured claim facts.
+Call the ClaimExtractor tool. It reads the claim from the private sly_data channel and returns the structured claim (peril, dates, amount, description) plus a redaction summary.
+Report the claim facts and state which sensitive fields (claimant, policy number, address, phone, email, bank account) were redacted.
+Never attempt to read out or reconstruct the claimant's identity, contact details, or bank/account information.
+""" ${aaosa_instructions}
+        tools = ["ClaimExtractor"]
+    }
+
+    # ----------------------------------------------------- #
+    # Specialist: policy-grounded coverage adjudication      #
+    # ----------------------------------------------------- #
+    {
+        name = "CoverageOfficer"
+        function = ${aaosa_call}{
+            description = "Adjudicates coverage against the policy and reports the decision, cited basis, and payable amount."
+        }
+        instructions = """
+You determine coverage.
+First, if you need the policy wording, call PolicyRetriever with the claim's peril to see the matching coverages, exclusions, and conditions.
+Then call CoverageEvaluator (it reads the claim from sly_data) to get the deterministic adjudication: in-force status, the matched coverage, any triggered exclusions, the applicable limit and deductible, and the computed payable amount.
+Report the coverage decision (PAY or DENY), the cited coverage or exclusion code(s), the limit and deductible, and the payable amount. Do not invent or recompute the payable — report exactly what the tool returns.
+""" ${aaosa_instructions}
+        tools = ["PolicyRetriever", "CoverageEvaluator"]
+    }
+
+    # ------------------------------------ #
+    # Specialist: fraud red-flag screening  #
+    # ------------------------------------ #
+    {
+        name = "FraudScreener"
+        function = ${aaosa_call}{
+            description = "Screens the claim for fraud red flags and reports the fraud band and whether SIU referral is recommended."
+        }
+        instructions = """
+You screen for fraud indicators.
+Call the FraudScorer tool (it reads the claim and coverage from sly_data). It returns a fraud score, a band (Low/Medium/High), the individual red flags, and a recommendation.
+Report the band, the specific flags, and whether an SIU referral is recommended. Be factual and proportionate: these are indicators for human review, not accusations.
+""" ${aaosa_instructions}
+        tools = ["FraudScorer"]
+    }
+
+    # ------------------------------------------------ #
+    # Specialist: quality gate (the evaluation loop)    #
+    # ------------------------------------------------ #
+    {
+        name = "AdjudicationCritic"
+        function = ${aaosa_call}{
+            description = "Scores the drafted disposition for completeness and grounding and returns the gaps that must be fixed."
+        }
+        instructions = """
+You are the quality gate for the disposition.
+Call the AdjudicationScorer tool, passing the full drafted disposition text as draft. It checks that there is a clear recommendation, that it cites the governing coverage or exclusion code, that the payable matches the computed amount, that the limit and deductible are disclosed for a payment, and that a High fraud band routes to INVESTIGATE/SIU.
+Report the completeness score, whether it passed, and exactly what must be fixed. Be strict: an unsupported or miscalculated disposition must not pass.
+""" ${aaosa_instructions}
+        tools = ["AdjudicationScorer"]
+    }
+
+    # =================================================================== #
+    # CODED TOOLS (grounding layer) — deterministic Python, no LLM         #
+    # =================================================================== #
+
+    {
+        name = "ClaimExtractor"
+        function = {
+            description = "Parses the FNOL into structured claim facts and redacts claimant PII and bank details into sly_data."
+            parameters = {
+                type = "object"
+                properties = {
+                    claim_text = {
+                        type = "string"
+                        description = "Optional fallback claim text. Normally the claim is read from sly_data['claim_text']."
+                    }
+                }
+                required = []
+            }
+        }
+        class = "claim_extractor.ClaimExtractor"
+    }
+
+    {
+        name = "PolicyRetriever"
+        function = {
+            description = "Returns the policy provisions relevant to a peril or query: matching coverages (with limits and deductibles), exclusions, and conditions."
+            parameters = {
+                type = "object"
+                properties = {
+                    peril = {
+                        type = "string"
+                        description = "The claim peril to look up, e.g. 'water damage', 'fire', 'theft'."
+                    }
+                    query = {
+                        type = "string"
+                        description = "Optional free-text query when the peril is unclear."
+                    }
+                }
+                required = []
+            }
+        }
+        class = "policy_retriever.PolicyRetriever"
+    }
+
+    {
+        name = "CoverageEvaluator"
+        function = {
+            description = "Deterministically adjudicates the claim against the policy (in-force, peril, exclusions, limit, deductible) and computes the payable amount. Writes the result to sly_data."
+            parameters = {
+                type = "object"
+                properties = {
+                    peril = {
+                        type = "string"
+                        description = "Optional peril hint. The claim is read from sly_data; this argument is not required."
+                    }
+                }
+                required = []
+            }
+        }
+        class = "coverage_evaluator.CoverageEvaluator"
+    }
+
+    {
+        name = "FraudScorer"
+        function = {
+            description = "Applies deterministic fraud red-flag rules to the claim and returns a score, band, flags, and an SIU recommendation. Writes the result to sly_data."
+            parameters = {
+                type = "object"
+                properties = {
+                    reason = {
+                        type = "string"
+                        description = "Optional note on why screening was requested. The claim and coverage are read from sly_data; this argument is not required."
+                    }
+                }
+                required = []
+            }
+        }
+        class = "fraud_scorer.FraudScorer"
+    }
+
+    {
+        name = "AdjudicationScorer"
+        function = {
+            description = "Scores the drafted disposition for completeness and grounding (recommendation, citation, payable consistency, limit/deductible disclosure, fraud routing) and returns the gaps."
+            parameters = {
+                type = "object"
+                properties = {
+                    draft = {
+                        type = "string"
+                        description = "The full drafted disposition text to evaluate."
+                    }
+                    threshold = {
+                        type = "int"
+                        description = "Pass threshold for the completeness score, 0-100 (default 80)."
+                    }
+                }
+                required = ["draft"]
+            }
+        }
+        class = "adjudication_scorer.AdjudicationScorer"
+    }
+]
