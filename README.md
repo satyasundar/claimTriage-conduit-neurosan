@@ -26,6 +26,8 @@ Coded Tools : [coded_tools/hackathon/claims_triage_assistant](./coded_tools/hack
 Evals: [hackathon_evals/run_eval.py](./hackathon_evals/run_eval.py)   
 Tests: [hackathon_tests/test_claims_triage.py](./hackathon_tests/test_claims_triage.py)
 
+![Claim Triage Agent Network](./hackathon_docs/Claim_triage_network.png)
+
 ## What it does
 
 Given a claim (a synthetic First Notice of Loss is included) and the policy, the network:
