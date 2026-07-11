@@ -26,7 +26,7 @@ Coded Tools : [coded_tools/hackathon/claims_triage_assistant](./coded_tools/hack
 Evals: [hackathon_evals/run_eval.py](./hackathon_evals/run_eval.py)   
 Tests: [hackathon_tests/test_claims_triage.py](./hackathon_tests/test_claims_triage.py)
 
-![Claim Triage Agent Network](./hackathon_docs/Claim_triage_network.png)
+![Claim Triage Agent Network](./Claim_triage_network.png)
 
 ## What it does
 
