@@ -1,4 +1,5 @@
-# Claims Triage Assistant — a governed, human-in-the-loop agent network on Neuro SAN
+# Claims Triage Assistant
+### A governed, human-in-the-loop agent network on Neuro SAN
 
 A multi-agent system, built on [Neuro SAN Studio](https://github.com/cognizant-ai-lab/neuro-san-studio),
 that triages an insurance claim against the policy and recommends **pay / deny /
