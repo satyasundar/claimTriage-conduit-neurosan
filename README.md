@@ -17,9 +17,9 @@ privacy story (PII/PHI/bank data never reaches the model) is a real differentiat
 # Project Demo Video
 
 ###  Watch the video Here => 
-[<b>Five Minute</b>](https://cognizantonline-my.sharepoint.com/:v:/g/personal/2459621_cognizant_com/IQDF7ftvQenoQ5cwiGNzTqTpAeir2vQ3SAEcmmEnfPGwzKw?e=h5adzh&nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D)
+[<b>Five Minute</b>](https://cognizantonline-my.sharepoint.com/:v:/g/personal/2459621_cognizant_com/IQDF7ftvQenoQ5cwiGNzTqTpAas5FIrHubk-rmO9Fx_d9L0?e=DgkGJA)
 
-[<b>Full Video</b>](https://cognizantonline-my.sharepoint.com/:v:/g/personal/2459621_cognizant_com/IQCMouPnQaBWQZDp9fWErq0TASj41mU4xhZwzJPYTEeo3qI?e=zOSkOG)
+[<b>Full Video</b>](https://cognizantonline-my.sharepoint.com/:v:/g/personal/2459621_cognizant_com/IQCMouPnQaBWQZDp9fWErq0TAW4uVjd4XNwt2tM8JglpZ_M?e=cCSgm3)
 
 
 ---
