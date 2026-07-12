@@ -25,7 +25,8 @@ Agent Network Manifest : [registries/hackathon/manifest.hocon](./registries/hack
 Coded Tools : [coded_tools/hackathon/claims_triage_assistant](./coded_tools/hackathon/claims_triage_assistant)    
 
 Evals: [hackathon_evals/run_eval.py](./hackathon_evals/run_eval.py)   
-Tests: [hackathon_tests/test_claims_triage.py](./hackathon_tests/test_claims_triage.py)
+Tests: [hackathon_tests/test_claims_triage.py](./hackathon_tests/test_claims_triage.py)    
+Sample claims : [Claims Scenarios](./help.md)
 
 ![Claim_triage_network](./hackathon_docs/Claim_triage_network.png)
 
@@ -125,8 +126,9 @@ Open <http://localhost:4173/> and pick **claims_triage_assistant** from the netw
 Send the claim through the **sly_data** field, so the claimant's PII never enters the
 LLM stream. In the UI's sly_data box, paste:
 
+#### <u> Normal Flow - To be APPROVED </u>
 ```json
-{ "claim_text": "{"claim_text": "FIRST NOTICE OF LOSS (FNOL) — SYNTHETIC SAMPLE (NOT A REAL CLAIM)\n\nPolicy Number: HO-2025-558831\nPolicy Type: Homeowners\nClaimant: Satya Nayak\nAddress: 1122, Prestige Greenfield, Bengaluru-49\nPhone: 1234567890\nEmail: satya.nayak@example.com\nPayout Account (IBAN): GB29 NWBK 6016 1331 9268 19\nDate of Loss: 2026-02-12\nDate Reported: 2026-02-20\nPeril: Water damage (burst pipe)\nAmount Claimed: $48,000\nLocation of Loss: 1122, Budigere Cross, Bengaluru\nDescription: A pipe burst in the upstairs bathroom, suddenly discharging water that damaged the floors and the ceiling in the room below. The burst was discovered the same day and a plumber stopped it immediately. The claimant is seeking the cost of drying, repairs, and replacement of damaged flooring.\n"}" }
+{"claim_text": "FIRST NOTICE OF LOSS (FNOL) — SYNTHETIC SAMPLE (NOT A REAL CLAIM)\n\nPolicy Number: HO-2025-558831\nPolicy Type: Homeowners\nClaimant: Satya Nayak\nAddress: 1122, Shriram Greenfield, Bengaluru-49\nPhone: 1234567890\nEmail: satya.nayak@example.com\nPayout Account (IBAN): GB29 NWBK 6016 1331 9268 19\nDate of Loss: 2026-02-12\nDate Reported: 2026-02-20\nPeril: Water damage (burst pipe)\nAmount Claimed: $48,000\nLocation of Loss: 1122, Budigere Cross, Bengaluru\nDescription: A pipe burst in the upstairs bathroom, suddenly discharging water that damaged the floors and the ceiling in the room below. The burst was discovered the same day and a plumber stopped it immediately. The claimant is seeking the cost of drying, repairs, and replacement of damaged flooring.\n"}
 ```
 
 Then send a message such as: *"Triage this claim and recommend a disposition."*
@@ -136,6 +138,19 @@ disposition, run the critic, and then ask you to **approve / request changes / r
 Reply `approve` to get the final disposition, or `request changes to the fraud assessment`
 to see it loop.
 
+## Other scenarios to test with below claim examples:
+#### <u>Reject Flow - Loss due to FLOOD to be REJECTED</u>
+
+
+```json
+{"claim_text": "FIRST NOTICE OF LOSS (FNOL) \u2014 SYNTHETIC SAMPLE (NOT A REAL CLAIM)\n\nPolicy Number: HO-2025-558831\nPolicy Type: Homeowners\nClaimant: Maria Whitfield\nAddress: 14 Elm Street, Riverton\nPhone: 555-0192\nEmail: maria.whitfield@example.com\nPayout Account (IBAN): GB29 NWBK 6016 1331 9268 19\nDate of Loss: 2026-02-12\nDate Reported: 2026-02-20\nPeril: Flood\nAmount Claimed: $48,000\nLocation of Loss: 14 Elm Street, Riverton\nDescription: Rising flood water from the nearby river overflowed its banks and entered the property, damaging the floors and the ceiling in the room below. The claimant is seeking the cost of drying, repairs, and replacement of damaged flooring.\n"}
+```
+
+#### <u>Investigate Flow - Late Reporting, Fraud Alert , To be INVESTIGATED </u>
+
+```json
+{"claim_text": "FIRST NOTICE OF LOSS (FNOL) \u2014 SYNTHETIC SAMPLE (NOT A REAL CLAIM)\n\nPolicy Number: HO-2025-558831\nPolicy Type: Homeowners\nClaimant: Maria Whitfield\nAddress: 14 Elm Street, Riverton\nPhone: 555-0192\nEmail: maria.whitfield@example.com\nPayout Account (IBAN): GB29 NWBK 6016 1331 9268 19\nDate of Loss: 2025-09-05\nDate Reported: 2025-10-25\nPeril: Water damage (burst pipe)\nAmount Claimed: $48,000\nLocation of Loss: 14 Elm Street, Riverton\nDescription: A pipe burst in the upstairs bathroom, suddenly discharging water that damaged the floors and the ceiling in the room below. The burst was discovered the same day and a plumber stopped it immediately. The claimant is seeking the cost of drying, repairs, and replacement of damaged flooring.\n"}
+```
 ---
 
 ## Test and evaluate (offline, no API key needed)
